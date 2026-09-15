@@ -41,11 +41,15 @@ jobs:
       packages: write
     # FIX: Export the generated tag so trigger-deployment can read it
     outputs:
-      image-tag: ${{ steps.meta.outputs.version }}
+      image-tag: ${{ steps.vars.outputs.sha }}
 
     steps:
       - name: checkout code
         uses: actions/checkout@v4
+
+      - name: Set Short Commit SHA
+        id: vars
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -55,7 +59,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GH_PAT }}
 
       - name: Extract Metadata (Tags, Labels)
         id: meta
