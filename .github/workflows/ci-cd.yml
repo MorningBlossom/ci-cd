@@ -39,6 +39,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    # FIX: Export the generated tag so trigger-deployment can read it
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
 
     steps:
       - name: checkout code
@@ -60,7 +63,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}/service
           tags: |
-            type=sha,format=short
+            type=sha,format=short,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and Push Docker Image
@@ -72,3 +75,26 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  trigger-deployment:
+    name: Trigger Deployment Dispatch
+    needs: docker-publish
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Send repository_dispatch to Infra Repo
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SERVICE_NAME: ${{ github.event.repository.name }}
+          TARGET_REPO: "MorningBlossom/release"
+          IMAGE_PATH: "ghcr.io/${{ github.repository }}/service"
+          IMAGE_TAG: ${{ needs.docker-publish.outputs.image-tag }}
+        run: |
+          echo "Dispatching 'deploy-service' to $TARGET_REPO for $SERVICE_NAME with tag $IMAGE_TAG..."
+          
+          gh api "repos/$TARGET_REPO/dispatches" \
+            -H "Accept: application/vnd.github+json" \
+            -F "event_type=deploy-service" \
+            -F "client_payload[service]=$SERVICE_NAME" \
+            -F "client_payload[image]=$IMAGE_PATH" \
+            -F "client_payload[tag]=$IMAGE_TAG"
