@@ -26,7 +26,7 @@ jobs:
         env:
           BRANCH_NAME: ${{ github.head_ref }}
           PR_TITLE: ${{ github.event.pull_request.title }}
-          JIRA_KEY: ${{ inputs.jira-key }}
+          JIRA_KEY: ${{ inputs.jira-key || 'SP'}}
         run: |
           JIRA_PATTERN="(^|[^a-zA-Z0-9])${JIRA_KEY}-[0-9]+([^a-zA-Z0-9]|$)"
 
