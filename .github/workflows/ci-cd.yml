@@ -8,8 +8,20 @@ on:
         default: '1.27'
         type: string
         required: false
+      jira-key:
+        description: "get JIRA ticket"
+        type: string
+        required: false
 
 jobs:
+
+  jira-validation:
+    name: JIRA VALIDATION
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/jira-validation.yml
+    with:
+      jira-key: ${{inputs.jira-key}}
+
   lint-and-test:
     name: Lint & Test
     runs-on: ubuntu-latest

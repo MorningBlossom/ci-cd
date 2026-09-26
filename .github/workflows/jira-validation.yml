@@ -1,0 +1,52 @@
+name: JIRA-VALIDATION
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+  workflow_call:
+    inputs:
+      jira-key:
+        description: "JIRA project key"
+        required: true
+        type: string
+        default: "SP"
+
+permissions:
+  pull-requests: read
+  contents: read
+
+jobs:
+  jira-check:
+    name: JIRA Ticket Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate JIRA reference
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          JIRA_KEY: ${{ inputs.jira-key || 'SP'}}
+        run: |
+          JIRA_PATTERN="(^|[^a-zA-Z0-9])${JIRA_KEY}-[0-9]+([^a-zA-Z0-9]|$)"
+
+          echo "JIRA Project: $JIRA_KEY"
+          echo "Branch: $BRANCH_NAME"
+          echo "PR Title: $PR_TITLE"
+
+          if [[ "$BRANCH_NAME" =~ $JIRA_PATTERN ]]; then
+            echo "JIRA Validation: PASSED"
+            echo "Found JIRA reference in branch name."
+            exit 0
+          fi
+
+          if [[ "$PR_TITLE" =~ $JIRA_PATTERN ]]; then
+            echo "JIRA Validation: PASSED"
+            echo "Found JIRA reference in PR title."
+            exit 0
+          fi
+
+          echo "JIRA Validation: FAILED"
+          echo "Neither branch name nor PR title contains a valid JIRA reference."
+          echo "Expected format: ${JIRA_KEY}-<number>"
+          exit 1
