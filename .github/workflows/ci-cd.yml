@@ -17,6 +17,7 @@ jobs:
 
   jira-validation:
     name: JIRA VALIDATION
+    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/jira-validation.yml
     with:
       jira-key: ${{inputs.jira-key}}
