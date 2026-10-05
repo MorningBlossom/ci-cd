@@ -77,7 +77,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/service
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=sha,format=short,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
@@ -103,7 +103,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
           SERVICE_NAME: ${{ github.event.repository.name }}
           TARGET_REPO: "MorningBlossom/release"
-          IMAGE_PATH: "ghcr.io/${{ github.repository }}/service"
+          IMAGE_PATH: "ghcr.io/${{ github.repository }}"
           IMAGE_TAG: ${{ needs.docker-publish.outputs.image-tag }}
         run: |
           echo "Dispatching 'deploy-service' to $TARGET_REPO for $SERVICE_NAME with tag $IMAGE_TAG..."
