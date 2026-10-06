@@ -13,8 +13,12 @@ on:
         type: string
         required: false
 
-jobs:
+permissions:
+  pull-requests: read
+  contents: read
+  packages: write
 
+jobs:
   jira-validation:
     name: JIRA VALIDATION
     if: github.event_name == 'pull_request'
