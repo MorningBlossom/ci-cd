@@ -24,7 +24,7 @@ jobs:
     if: github.event_name == 'pull_request'
     uses: ./.github/workflows/jira-validation.yml
     with:
-      jira-key: ${{inputs.jira-key}}
+      jira-key: ${{ inputs.jira-key }}
 
   lint-and-test:
     name: Lint & Test
@@ -36,7 +36,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{inputs.go-version}}
+          go-version: ${{ inputs.go-version }}
           cache: true
 
       - name: Run Golangci-lint
@@ -55,7 +55,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    # FIX: Export the generated tag so trigger-deployment can read it
     outputs:
       image-tag: ${{ steps.vars.outputs.sha }}
 
@@ -75,7 +74,8 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GH_PAT }}
+          # Use the workflow token so GHCR can associate the package with this repository.
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Metadata (Tags, Labels)
         id: meta
@@ -106,6 +106,7 @@ jobs:
     steps:
       - name: Send repository_dispatch to Infra Repo
         env:
+          # PAT is retained here because this token dispatches to a separate repository.
           GH_TOKEN: ${{ secrets.GH_PAT }}
           SERVICE_NAME: ${{ github.event.repository.name }}
           TARGET_REPO: "MorningBlossom/release"
@@ -113,7 +114,7 @@ jobs:
           IMAGE_TAG: ${{ needs.docker-publish.outputs.image-tag }}
         run: |
           echo "Dispatching 'deploy-service' to $TARGET_REPO for $SERVICE_NAME with tag $IMAGE_TAG..."
-          
+
           gh api "repos/$TARGET_REPO/dispatches" \
             -H "Accept: application/vnd.github+json" \
             -F "event_type=deploy-service" \
